@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import '../game/salto_game.dart';
 import '../services/ads_service.dart';
 import '../services/score_service.dart';
+import '../services/sound_service.dart';
 import '../widgets/banner_ad_widget.dart';
 
 class GameScreen extends StatefulWidget {
@@ -50,6 +51,10 @@ class _GameScreenState extends State<GameScreen> {
       _isNewHighScore = isNewHighScore;
       if (isNewHighScore) _highScore = score;
     });
+
+    if (isNewHighScore) {
+      SoundService.instance.playHighScore();
+    }
 
     // Só conta como partida encerrada (para fins de cadência do
     // intersticial) quando não há mais opção de continuar.

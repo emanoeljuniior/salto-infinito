@@ -1,10 +1,12 @@
 import 'dart:math';
 
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flame/events.dart';
 import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
+import '../services/sound_service.dart';
 import 'obstacle.dart';
 import 'player.dart';
 
@@ -18,7 +20,8 @@ class SaltoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   static const double groundHeightFraction = 0.18;
   static const double baseSpeed = 320;
   static const double maxSpeed = 720;
-  static const double speedRampPerSecond = 6;
+  static const double speedRampPerSecond = 5;
+  static const double minObstaclePeriod = 0.65;
 
   final Random _random = Random();
 
@@ -82,8 +85,11 @@ class SaltoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     add(obstacle);
 
     // Próximo obstáculo em um intervalo aleatório, um pouco mais apertado
-    // conforme a dificuldade aumenta.
-    final minPeriod = max(0.55, 1.4 - (currentSpeed - baseSpeed) / 500);
+    // conforme a dificuldade aumenta, sem nunca ficar impossível de reagir.
+    final minPeriod = max(
+      minObstaclePeriod,
+      1.4 - (currentSpeed - baseSpeed) / 500,
+    );
     obstacleSpawner.timer.limit = minPeriod + _random.nextDouble() * 0.6;
   }
 
@@ -107,7 +113,23 @@ class SaltoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
   void _gameOver() {
     if (isGameOver) return;
     isGameOver = true;
+    SoundService.instance.playHit();
+    _flashHit();
     onGameOver(score);
+  }
+
+  void _flashHit() {
+    final flash = RectangleComponent(
+      size: size.clone(),
+      paint: Paint()..color = const Color(0xFFF56565).withValues(alpha: 0.4),
+    );
+    flash.add(
+      OpacityEffect.fadeOut(
+        EffectController(duration: 0.3),
+        onComplete: flash.removeFromParent,
+      ),
+    );
+    add(flash);
   }
 
   /// Reinicia o jogo do zero para uma nova partida.

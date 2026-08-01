@@ -1,7 +1,9 @@
 import 'package:flame/collisions.dart';
 import 'package:flame/components.dart';
+import 'package:flame/effects.dart';
 import 'package:flutter/material.dart';
 
+import '../services/sound_service.dart';
 import 'salto_game.dart';
 
 class Player extends RectangleComponent
@@ -30,6 +32,13 @@ class Player extends RectangleComponent
     if (isOnGround) {
       velocityY = jumpVelocity;
       isOnGround = false;
+      SoundService.instance.playJump();
+      add(
+        ScaleEffect.by(
+          Vector2(0.85, 1.2),
+          EffectController(duration: 0.08, alternate: true),
+        ),
+      );
     }
   }
 
@@ -48,9 +57,18 @@ class Player extends RectangleComponent
 
       final groundY = game.groundY - playerSize;
       if (position.y >= groundY) {
+        final wasFalling = !isOnGround;
         position.y = groundY;
         velocityY = 0;
         isOnGround = true;
+        if (wasFalling) {
+          add(
+            ScaleEffect.by(
+              Vector2(1.2, 0.8),
+              EffectController(duration: 0.08, alternate: true),
+            ),
+          );
+        }
       }
     }
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/settings_service.dart';
+import '../services/sound_service.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -32,7 +33,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _toggleSound(bool value) async {
     setState(() => _soundEnabled = value);
-    await _settingsService.setSoundEnabled(value);
+    await SoundService.instance.setEnabled(value);
   }
 
   @override
