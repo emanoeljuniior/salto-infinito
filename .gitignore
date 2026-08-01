@@ -55,3 +55,4 @@ service-account*.json
 .env
 *.pem
 *.p12
+CLAUDE.md
