@@ -15,6 +15,7 @@ class _GameScreenState extends State<GameScreen> {
   final ScoreService _scoreService = ScoreService();
   late final SaltoGame _game;
 
+  int _highScore = 0;
   bool _isGameOver = false;
   int _lastScore = 0;
   bool _isNewHighScore = false;
@@ -23,6 +24,14 @@ class _GameScreenState extends State<GameScreen> {
   void initState() {
     super.initState();
     _game = SaltoGame(onGameOver: _handleGameOver);
+    _loadHighScore();
+  }
+
+  Future<void> _loadHighScore() async {
+    final highScore = await _scoreService.getHighScore();
+    if (mounted) {
+      setState(() => _highScore = highScore);
+    }
   }
 
   Future<void> _handleGameOver(int score) async {
@@ -32,6 +41,7 @@ class _GameScreenState extends State<GameScreen> {
         _isGameOver = true;
         _lastScore = score;
         _isNewHighScore = isNewHighScore;
+        if (isNewHighScore) _highScore = score;
       });
     }
   }
@@ -48,6 +58,30 @@ class _GameScreenState extends State<GameScreen> {
       body: Stack(
         children: [
           GameWidget(game: _game),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close, color: Colors.white70),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 12, right: 4),
+                    child: Text(
+                      'Recorde: $_highScore',
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
           if (_isGameOver)
             _GameOverOverlay(
               score: _lastScore,
