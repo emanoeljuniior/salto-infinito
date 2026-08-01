@@ -2,7 +2,9 @@ import 'package:flame/game.dart';
 import 'package:flutter/material.dart';
 
 import '../game/salto_game.dart';
+import '../services/ads_service.dart';
 import '../services/score_service.dart';
+import '../widgets/banner_ad_widget.dart';
 
 class GameScreen extends StatefulWidget {
   const GameScreen({super.key});
@@ -19,6 +21,7 @@ class _GameScreenState extends State<GameScreen> {
   bool _isGameOver = false;
   int _lastScore = 0;
   bool _isNewHighScore = false;
+  bool _usedContinue = false;
 
   @override
   void initState() {
@@ -34,20 +37,45 @@ class _GameScreenState extends State<GameScreen> {
     }
   }
 
+  bool get _continueAvailable =>
+      !_usedContinue && AdsService.instance.isRewardedAdReady;
+
   Future<void> _handleGameOver(int score) async {
     final isNewHighScore = await _scoreService.saveIfHighScore(score);
-    if (mounted) {
-      setState(() {
-        _isGameOver = true;
-        _lastScore = score;
-        _isNewHighScore = isNewHighScore;
-        if (isNewHighScore) _highScore = score;
-      });
+    if (!mounted) return;
+
+    setState(() {
+      _isGameOver = true;
+      _lastScore = score;
+      _isNewHighScore = isNewHighScore;
+      if (isNewHighScore) _highScore = score;
+    });
+
+    // Só conta como partida encerrada (para fins de cadência do
+    // intersticial) quando não há mais opção de continuar.
+    if (!_continueAvailable) {
+      await AdsService.instance.maybeShowInterstitialOnGameOver();
     }
   }
 
+  void _continueWithRewardedAd() {
+    AdsService.instance.showRewardedAd(
+      onReward: () {
+        if (!mounted) return;
+        setState(() {
+          _usedContinue = true;
+          _isGameOver = false;
+        });
+        _game.continueAfterDeath();
+      },
+    );
+  }
+
   void _restart() {
-    setState(() => _isGameOver = false);
+    setState(() {
+      _isGameOver = false;
+      _usedContinue = false;
+    });
     _game.reset();
   }
 
@@ -86,6 +114,8 @@ class _GameScreenState extends State<GameScreen> {
             _GameOverOverlay(
               score: _lastScore,
               isNewHighScore: _isNewHighScore,
+              canContinue: _continueAvailable,
+              onContinue: _continueWithRewardedAd,
               onRestart: _restart,
               onMenu: () => Navigator.of(context).pop(),
             ),
@@ -99,12 +129,16 @@ class _GameOverOverlay extends StatelessWidget {
   const _GameOverOverlay({
     required this.score,
     required this.isNewHighScore,
+    required this.canContinue,
+    required this.onContinue,
     required this.onRestart,
     required this.onMenu,
   });
 
   final int score;
   final bool isNewHighScore;
+  final bool canContinue;
+  final VoidCallback onContinue;
   final VoidCallback onRestart;
   final VoidCallback onMenu;
 
@@ -112,46 +146,71 @@ class _GameOverOverlay extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.black54,
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (isNewHighScore)
-              const Text(
-                'Novo recorde!',
-                style: TextStyle(
-                  color: Color(0xFF4FD1C5),
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+      child: Column(
+        children: [
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  if (isNewHighScore)
+                    const Text(
+                      'Novo recorde!',
+                      style: TextStyle(
+                        color: Color(0xFF4FD1C5),
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Pontuação: $score',
+                    style: const TextStyle(color: Colors.white, fontSize: 28),
+                  ),
+                  const SizedBox(height: 32),
+                  if (canContinue) ...[
+                    ElevatedButton.icon(
+                      onPressed: onContinue,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFFF6AD55),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 32,
+                          vertical: 14,
+                        ),
+                      ),
+                      icon: const Icon(Icons.play_circle_outline),
+                      label: const Text('Continuar (assistir anúncio)'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                  ElevatedButton(
+                    onPressed: onRestart,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF4FD1C5),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 40,
+                        vertical: 14,
+                      ),
+                    ),
+                    child: const Text('Jogar novamente'),
+                  ),
+                  const SizedBox(height: 12),
+                  TextButton(
+                    onPressed: onMenu,
+                    child: const Text(
+                      'Menu principal',
+                      style: TextStyle(color: Colors.white70),
+                    ),
+                  ),
+                ],
               ),
-            const SizedBox(height: 8),
-            Text(
-              'Pontuação: $score',
-              style: const TextStyle(color: Colors.white, fontSize: 28),
             ),
-            const SizedBox(height: 32),
-            ElevatedButton(
-              onPressed: onRestart,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF4FD1C5),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 40,
-                  vertical: 14,
-                ),
-              ),
-              child: const Text('Jogar novamente'),
-            ),
-            const SizedBox(height: 12),
-            TextButton(
-              onPressed: onMenu,
-              child: const Text(
-                'Menu principal',
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
-          ],
-        ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(bottom: 8),
+            child: BannerAdWidget(),
+          ),
+        ],
       ),
     );
   }

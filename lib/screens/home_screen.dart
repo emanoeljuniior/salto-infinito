@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../services/score_service.dart';
+import '../widgets/banner_ad_widget.dart';
 import 'game_screen.dart';
 import 'settings_screen.dart';
 
@@ -46,50 +47,63 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       backgroundColor: const Color(0xFF1A202C),
       body: SafeArea(
-        child: Stack(
+        child: Column(
           children: [
-            Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
+            Expanded(
+              child: Stack(
                 children: [
-                  const Text(
-                    'Salto Infinito',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 40,
-                      fontWeight: FontWeight.bold,
+                  Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Text(
+                          'Salto Infinito',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 40,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Recorde: $_highScore',
+                          style: const TextStyle(
+                            color: Colors.white70,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 40),
+                        ElevatedButton(
+                          onPressed: _play,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF4FD1C5),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 48,
+                              vertical: 16,
+                            ),
+                          ),
+                          child: const Text(
+                            'Jogar',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Recorde: $_highScore',
-                    style: const TextStyle(
-                      color: Colors.white70,
-                      fontSize: 18,
+                  Positioned(
+                    top: 8,
+                    right: 8,
+                    child: IconButton(
+                      onPressed: _openSettings,
+                      icon: const Icon(Icons.settings, color: Colors.white70),
                     ),
-                  ),
-                  const SizedBox(height: 40),
-                  ElevatedButton(
-                    onPressed: _play,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF4FD1C5),
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 48,
-                        vertical: 16,
-                      ),
-                    ),
-                    child: const Text('Jogar', style: TextStyle(fontSize: 20)),
                   ),
                 ],
               ),
             ),
-            Positioned(
-              top: 8,
-              right: 8,
-              child: IconButton(
-                onPressed: _openSettings,
-                icon: const Icon(Icons.settings, color: Colors.white70),
-              ),
+            const Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: BannerAdWidget(),
             ),
           ],
         ),

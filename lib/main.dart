@@ -1,9 +1,14 @@
 import 'package:flutter/material.dart';
 
 import 'screens/home_screen.dart';
+import 'services/ads_service.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const SaltoInfinitoApp());
+  // Consentimento (UMP) + inicialização do AdMob rodam em segundo plano,
+  // sem bloquear a primeira tela do app.
+  AdsService.instance.initialize();
 }
 
 class SaltoInfinitoApp extends StatelessWidget {

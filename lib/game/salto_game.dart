@@ -110,12 +110,21 @@ class SaltoGame extends FlameGame with TapCallbacks, HasCollisionDetection {
     onGameOver(score);
   }
 
-  /// Reinicia o jogo para uma nova partida.
+  /// Reinicia o jogo do zero para uma nova partida.
   void reset() {
     isGameOver = false;
     currentSpeed = baseSpeed;
     distance = 0;
     obstacleSpawner.timer.limit = 1.4;
+    player.reset(groundY);
+    removeAll(children.whereType<Obstacle>());
+  }
+
+  /// Continua a partida atual após a morte (ex.: via anúncio recompensado),
+  /// mantendo a pontuação e a velocidade, apenas limpando os obstáculos e
+  /// reposicionando o jogador.
+  void continueAfterDeath() {
+    isGameOver = false;
     player.reset(groundY);
     removeAll(children.whereType<Obstacle>());
   }
