@@ -1,4 +1,4 @@
-name: Build Android Release AAB
+name: Build Android Release
 
 on:
   workflow_dispatch: {}
@@ -35,9 +35,18 @@ jobs:
 
       - run: flutter pub get
 
-      - run: flutter build appbundle --release
+      - name: Build AAB (para Google Play Console)
+        run: flutter build appbundle --release
+
+      - name: Build APK (para itch.io, Amazon Appstore, download direto)
+        run: flutter build apk --release
 
       - uses: actions/upload-artifact@v4
         with:
           name: salto-infinito-release-aab
           path: build/app/outputs/bundle/release/app-release.aab
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: salto-infinito-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
